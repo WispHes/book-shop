@@ -6,7 +6,7 @@ import (
 	"github.com/wisphes/book-shop/configs"
 	"github.com/wisphes/book-shop/internal/pg"
 	"github.com/wisphes/book-shop/internal/pkg/handler"
-	repository2 "github.com/wisphes/book-shop/internal/pkg/repository"
+	"github.com/wisphes/book-shop/internal/pkg/repository"
 	"github.com/wisphes/book-shop/internal/pkg/service"
 	"log"
 )
@@ -28,7 +28,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	repos := repository2.NewRepository(db)
+	repos := repository.NewRepository(db)
 	services := service.NewService(repos)
 	r := handler.NewHandler(services)
 
