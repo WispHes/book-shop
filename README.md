@@ -2,27 +2,8 @@
 
 ### 1 - Создать ./env и поместить туда
 ```
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=12345
-DB_NAME=postgres
-SERVER_PORT=8080
-SSL_MODE=disable
+make build
 ```
-### 2 - Загрузить докер образ и запустить контейнер бд
-```
-docker run --name=restful -e POSTGRES_PASSWORD='12345' -p 5432:5432 -d --rm postgres
-```
-### 3 - Применить миграции
-```
-make migrate
-```
-### 4 - Скачать все пакеты go приложения
-```
-go mod tidy
-```
-### 5 - Запустить приложение
 
 
 ## Примеры запросов API
