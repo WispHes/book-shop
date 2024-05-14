@@ -4,10 +4,10 @@ import (
 	_ "github.com/lib/pq"
 	bookshop "github.com/wisphes/book-shop"
 	"github.com/wisphes/book-shop/configs"
-	"github.com/wisphes/book-shop/internal/pg"
-	"github.com/wisphes/book-shop/internal/pkg/handler"
-	"github.com/wisphes/book-shop/internal/pkg/repository"
-	"github.com/wisphes/book-shop/internal/pkg/service"
+	"github.com/wisphes/book-shop/internal/handler"
+	"github.com/wisphes/book-shop/internal/pkg/pg"
+	"github.com/wisphes/book-shop/internal/repository"
+	"github.com/wisphes/book-shop/internal/service"
 	"log"
 )
 

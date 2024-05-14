@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"github.com/wisphes/book-shop/internal/models"
-	"github.com/wisphes/book-shop/internal/pkg/repository"
+	"github.com/wisphes/book-shop/internal/repository"
 )
 
 type CategoryService struct {

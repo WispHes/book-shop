@@ -2,7 +2,7 @@ package handler
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/wisphes/book-shop/internal/pkg/service"
+	"github.com/wisphes/book-shop/internal/service"
 	"net/http"
 )
 

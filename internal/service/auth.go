@@ -5,7 +5,7 @@ import (
 	"errors"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/wisphes/book-shop/internal/models"
-	"github.com/wisphes/book-shop/internal/pkg/repository"
+	"github.com/wisphes/book-shop/internal/repository"
 	"time"
 )
 
