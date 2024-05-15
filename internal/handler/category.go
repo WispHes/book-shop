@@ -91,7 +91,7 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UpdCategory(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set(`Content-Type`, applicationJson)
 	ctx := context.Background()
 

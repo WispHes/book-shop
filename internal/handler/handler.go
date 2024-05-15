@@ -30,7 +30,7 @@ func (h *Handler) InitRoutes() *mux.Router {
 	r.HandleFunc(`/api/categories`, h.GetCategories).Methods(http.MethodGet)
 	r.HandleFunc(`/api/category/{id}`, h.GetCategory).Methods(http.MethodGet)
 	r.HandleFunc(`/api/category`, h.CreateCategory).Methods(http.MethodPost)
-	r.HandleFunc(`/api/category/{id}`, h.UpdateCategory).Methods(http.MethodPut)
+	r.HandleFunc(`/api/category/{id}`, h.UpdCategory).Methods(http.MethodPut)
 
 	//// Book
 	//r.HandleFunc(`/api/books`, h.GetBooks).Methods(http.MethodGet)
