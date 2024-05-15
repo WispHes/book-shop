@@ -6,13 +6,18 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/wisphes/book-shop/internal/models"
+	"github.com/wisphes/book-shop/internal/pkg/pg"
 )
+
+type Authorization interface {
+	CreateUser(ctx context.Context, user models.User) (int, error)
+	GetUser(ctx context.Context, email, password string) (models.User, error)
+	IsAdmin(ctx context.Context, id int) (models.User, error)
+}
 
 type AuthPostgres struct {
 	db *sqlx.DB
 }
-
-const usersTable = "users"
 
 func NewAuthPostgres(db *sqlx.DB) *AuthPostgres {
 	return &AuthPostgres{db: db}
@@ -21,7 +26,7 @@ func NewAuthPostgres(db *sqlx.DB) *AuthPostgres {
 func (r *AuthPostgres) CreateUser(ctx context.Context, newUser models.User) (int, error) {
 	// проверяю зарегистрирован ли данный email ранее
 	var user models.User
-	query := fmt.Sprintf("SELECT * FROM %s WHERE email=$1", usersTable)
+	query := fmt.Sprintf("SELECT * FROM %s WHERE email=$1", pg.UsersTable)
 	err := r.db.Get(&user, query, newUser.Email)
 
 	// если такой email уже есть в бд, то возвращаю ошибку
@@ -32,7 +37,7 @@ func (r *AuthPostgres) CreateUser(ctx context.Context, newUser models.User) (int
 	// если пользователя под таким email нет в базе, то заполняю таблицу новыми полями
 	query = fmt.Sprintf(
 		"INSERT INTO %s (username, email, password) values ($1, $2, $3) RETURNING id",
-		usersTable,
+		pg.UsersTable,
 	)
 	row := r.db.QueryRow(query, newUser.Username, newUser.Email, newUser.Password)
 
@@ -48,7 +53,7 @@ func (r *AuthPostgres) CreateUser(ctx context.Context, newUser models.User) (int
 func (r *AuthPostgres) GetUser(ctx context.Context, email, password string) (models.User, error) {
 	var user models.User
 
-	query := fmt.Sprintf("SELECT id FROM %s WHERE email=$1 AND password=$2", usersTable)
+	query := fmt.Sprintf("SELECT id FROM %s WHERE email=$1 AND password=$2", pg.UsersTable)
 	err := r.db.Get(&user, query, email, password)
 
 	return user, err
@@ -57,7 +62,7 @@ func (r *AuthPostgres) GetUser(ctx context.Context, email, password string) (mod
 func (r *AuthPostgres) IsAdmin(ctx context.Context, id int) (models.User, error) {
 	var user models.User
 
-	query := fmt.Sprintf("SELECT is_admin FROM %s WHERE id=$1", usersTable)
+	query := fmt.Sprintf("SELECT is_admin FROM %s WHERE id=$1", pg.UsersTable)
 	err := r.db.Get(&user, query, id)
 
 	return user, err

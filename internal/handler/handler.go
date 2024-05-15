@@ -2,18 +2,21 @@ package handler
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/wisphes/book-shop/internal/service"
 	"net/http"
 )
 
 const applicationJson = "application/json"
 
 type Handler struct {
-	services *service.Service
+	CatHandler  CategoryHandler
+	UserHandler UserHandler
 }
 
-func NewHandler(services *service.Service) *Handler {
-	return &Handler{services: services}
+func NewHandler(userHand UserHandler, catHand CategoryHandler) *Handler {
+	return &Handler{
+		CatHandler:  catHand,
+		UserHandler: userHand,
+	}
 }
 
 func (h *Handler) InitRoutes() *mux.Router {

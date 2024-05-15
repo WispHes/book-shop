@@ -11,17 +11,24 @@ import (
 
 const signingKey = "ASDFghj1234%^&*ZXCVbnm"
 
-type tokenClaims struct {
-	jwt.RegisteredClaims
-	UserId int `json:"user_id"`
+type Authorization interface {
+	CreateUser(ctx context.Context, user models.User) (int, error)
+	GenerateToken(ctx context.Context, email, password string) (string, error)
+	ParseToken(ctx context.Context, token string) (int, error)
+	IsAdmin(ctx context.Context, id int) (bool, error)
 }
 
 type AuthService struct {
-	repo repository.Authorization
+	repo repository.AuthPostgres
 }
 
-func NewAuthService(repo repository.Authorization) *AuthService {
-	return &AuthService{repo: repo}
+func NewAuthService(repo *repository.AuthPostgres) *AuthService {
+	return &AuthService{repo: *repo}
+}
+
+type tokenClaims struct {
+	jwt.RegisteredClaims
+	UserId int `json:"user_id"`
 }
 
 func (s *AuthService) CreateUser(ctx context.Context, user models.User) (int, error) {

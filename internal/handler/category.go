@@ -5,15 +5,26 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/wisphes/book-shop/internal/models"
+	"github.com/wisphes/book-shop/internal/service"
 	"net/http"
 	"strconv"
 )
+
+type CategoryHandler struct {
+	serv service.CategoryService
+}
+
+func NewCategoryHandler(serv *service.CategoryService) *CategoryHandler {
+	return &CategoryHandler{
+		serv: *serv,
+	}
+}
 
 func (h *Handler) GetCategories(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	w.Header().Set("Content-Type", applicationJson)
 
-	categories, err := h.services.Category.GetCategories(ctx)
+	categories, err := h.CatHandler.serv.GetCategories(ctx)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -35,7 +46,7 @@ func (h *Handler) GetCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	category, err := h.services.Category.GetCategory(ctx, id)
+	category, err := h.CatHandler.serv.GetCategory(ctx, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -57,7 +68,7 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err = h.services.Authorization.IsAdmin(ctx, id); err != nil {
+	if _, err = h.UserHandler.serv.IsAdmin(ctx, id); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -68,7 +79,7 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newCategory, err := h.services.Category.CreateCategory(ctx, category)
+	newCategory, err := h.CatHandler.serv.CreateCategory(ctx, category)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -90,7 +101,7 @@ func (h *Handler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err = h.services.Authorization.IsAdmin(ctx, userId); err != nil {
+	if _, err = h.UserHandler.serv.IsAdmin(ctx, userId); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -109,7 +120,7 @@ func (h *Handler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newCategory, err := h.services.Category.UpdateCategory(ctx, updCat)
+	newCategory, err := h.CatHandler.serv.UpdateCategory(ctx, updCat)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

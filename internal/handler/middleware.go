@@ -22,7 +22,7 @@ func (h *Handler) UserIdentity(w http.ResponseWriter, r *http.Request) (int, err
 	if len(headerParts) != 2 {
 		return 0, errors.New("invalid token")
 	}
-	userId, err := h.services.Authorization.ParseToken(ctx, headerParts[1])
+	userId, err := h.UserHandler.serv.ParseToken(ctx, headerParts[1])
 	if err != nil {
 		return 0, errors.New("invalid token")
 	}

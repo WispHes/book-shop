@@ -6,12 +6,19 @@ import (
 	"github.com/wisphes/book-shop/internal/repository"
 )
 
-type CategoryService struct {
-	repo repository.Category
+type Category interface {
+	GetCategories(ctx context.Context) ([]models.Category, error)
+	GetCategory(ctx context.Context, id int) (models.Category, error)
+	CreateCategory(ctx context.Context, category models.Category) (models.Category, error)
+	UpdateCategory(ctx context.Context, category models.Category) (models.Category, error)
 }
 
-func NewCategoryService(repo repository.Category) *CategoryService {
-	return &CategoryService{repo: repo}
+type CategoryService struct {
+	repo repository.CategoryPostgres
+}
+
+func NewCategoryService(repo *repository.CategoryPostgres) *CategoryService {
+	return &CategoryService{repo: *repo}
 }
 
 func (s *CategoryService) GetCategories(ctx context.Context) ([]models.Category, error) {

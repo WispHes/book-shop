@@ -1,8 +1,6 @@
-package main
+package dep
 
 import (
-	_ "github.com/lib/pq"
-	bookshop "github.com/wisphes/book-shop"
 	"github.com/wisphes/book-shop/configs"
 	"github.com/wisphes/book-shop/internal/handler"
 	"github.com/wisphes/book-shop/internal/pkg/pg"
@@ -11,7 +9,7 @@ import (
 	"log"
 )
 
-func main() {
+func InitDep() *handler.Handler {
 	cfg, err := configs.NewParsedConfig()
 	if err != nil {
 		log.Fatal(err)
@@ -28,11 +26,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	repos := repository.NewRepository(db)
-	services := service.NewService(repos)
-	r := handler.NewHandler(services)
+	repUser := repository.NewAuthPostgres(db)
+	servUser := service.NewAuthService(repUser)
+	handUser := handler.NewUserHandler(servUser)
 
-	srv := &bookshop.Server{}
-	log.Fatal(srv.Run(cfg.ServerPort, r.InitRoutes()))
+	repCat := repository.NewCategoryPostgres(db)
+	servCat := service.NewCategoryService(repCat)
+	handCat := handler.NewCategoryHandler(servCat)
 
+	return handler.NewHandler(*handUser, *handCat)
 }

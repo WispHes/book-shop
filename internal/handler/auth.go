@@ -5,8 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/wisphes/book-shop/internal/models"
+	"github.com/wisphes/book-shop/internal/service"
 	"net/http"
 )
+
+type UserHandler struct {
+	serv service.AuthService
+}
+
+func NewUserHandler(serv *service.AuthService) *UserHandler {
+	return &UserHandler{serv: *serv}
+}
 
 func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", applicationJson)
@@ -18,7 +27,7 @@ func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.services.Authorization.CreateUser(ctx, input)
+	id, err := h.UserHandler.serv.CreateUser(ctx, input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -43,7 +52,7 @@ func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	token, err := h.services.Authorization.GenerateToken(ctx, input.Email, input.Password)
+	token, err := h.UserHandler.serv.GenerateToken(ctx, input.Email, input.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
