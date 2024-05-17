@@ -11,9 +11,10 @@ import (
 
 type Category interface {
 	GetCategories(ctx context.Context) ([]models.Category, error)
-	GetCategory(ctx context.Context, id int) (models.Category, error)
+	GetCategory(ctx context.Context, catId int) (models.Category, error)
 	CreateCategory(ctx context.Context, category models.Category) (models.Category, error)
 	UpdateCategory(ctx context.Context, category models.Category) (models.Category, error)
+	DeleteCategory(ctx context.Context, catId int) error
 }
 
 type CategoryPostgres struct {
@@ -25,9 +26,7 @@ func NewCategoryPostgres(db *sqlx.DB) *CategoryPostgres {
 }
 
 func (r *CategoryPostgres) GetCategories(ctx context.Context) ([]models.Category, error) {
-	var category models.Category
 	var categories []models.Category
-
 	query := fmt.Sprintf("SELECT * FROM %s", pg.CategoriesTable)
 
 	rows, err := r.db.Query(query)
@@ -36,8 +35,9 @@ func (r *CategoryPostgres) GetCategories(ctx context.Context) ([]models.Category
 	}
 
 	for rows.Next() {
-		err = rows.Scan(&category.Id, &category.Title)
-		if err != nil {
+		var category models.Category
+
+		if err = rows.Scan(&category.Id, &category.Title); err != nil {
 			return nil, err
 		}
 		categories = append(categories, category)
@@ -57,54 +57,55 @@ func (r *CategoryPostgres) GetCategory(ctx context.Context, catId int) (models.C
 
 func (r *CategoryPostgres) CreateCategory(ctx context.Context, category models.Category) (models.Category, error) {
 	// сначала проверяю, есть ли в базе уже эта категория
-	_, err := r.checkCatInTable(ctx, 1, category.Title)
-	if err != nil {
-		return models.Category{}, err
+	if _, ok := r.checkCatInTable(ctx, category.Title); ok == nil {
+		return models.Category{}, errors.New("category already exists")
 	}
 
 	// если нет, то заполняю таблицу новой категорией
 	query := fmt.Sprintf("INSERT INTO %s (title) VALUES ($1)", pg.CategoriesTable)
-	_, err = r.db.Exec(query, category.Title)
-	if err != nil {
+	if _, err := r.db.Exec(query, category.Title); err != nil {
 		return models.Category{}, err
 	}
 
 	// после заполнения отдаю эту категорию для вывода
-	return r.checkCatInTable(ctx, 2, category.Title)
+	return r.checkCatInTable(ctx, category.Title)
 }
 
 func (r *CategoryPostgres) UpdateCategory(ctx context.Context, category models.Category) (models.Category, error) {
 	// сначала проверяю, есть ли в базе уже эта категория на которую я хочу изменить текущую
-	_, err := r.checkCatInTable(ctx, 1, category.Title)
-	if err != nil {
-		return category, err
+	if _, ok := r.checkCatInTable(ctx, category.Title); ok == nil {
+		return category, errors.New("category already exists")
 	}
 
 	// если нет, то обновляю в таблице категорию
 	query := fmt.Sprintf("UPDATE %s SET title=$1 WHERE id=$2", pg.CategoriesTable)
-	_, err = r.db.Exec(query, category.Title, category.Id)
-	if err != nil {
+	if _, err := r.db.Exec(query, category.Title, category.Id); err != nil {
 		return models.Category{}, err
 	}
 
 	// после обновления отдаю эту категорию для вывода
-	return r.checkCatInTable(ctx, 2, category.Title)
+	return r.checkCatInTable(ctx, category.Title)
 }
 
-// Функция обрабатывает 2 случая:
-// Случай - параметр в функции flag 1/2
-// 1 - существует ли категория в бд которую мы хотим создать/изменить
-// 2 - получить измененную/созданную категорию
-func (r *CategoryPostgres) checkCatInTable(ctx context.Context, flag int8, title string) (models.Category, error) {
+func (r *CategoryPostgres) checkCatInTable(ctx context.Context, title string) (models.Category, error) {
 	var category models.Category
 
 	query := fmt.Sprintf("SELECT * FROM %s WHERE title=$1", pg.CategoriesTable)
-	err := r.db.Get(&category, query, title)
+	ok := r.db.Get(&category, query, title)
 
-	// обработка первого случая
-	if flag == 1 && err == nil {
-		return category, errors.New("category already exists")
+	return category, ok
+}
+
+func (r *CategoryPostgres) DeleteCategory(ctx context.Context, catId int) error {
+	query := fmt.Sprintf("UPDATE %s SET category_id=0 WHERE category_id=$1", pg.BooksTable)
+	if _, err := r.db.Exec(query, catId); err != nil {
+		return err
 	}
 
-	return category, nil
+	query = fmt.Sprintf("DELETE FROM %s WHERE id=$1", pg.CategoriesTable)
+	if _, err := r.db.Exec(query, catId); err != nil {
+		return err
+	}
+
+	return nil
 }

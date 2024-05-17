@@ -11,22 +11,24 @@ import (
 )
 
 type CategoryHandler struct {
-	serv service.CategoryService
+	catServ  *service.CategoryService
+	userServ *service.UserService
 }
 
-func NewCategoryHandler(serv *service.CategoryService) *CategoryHandler {
+func NewCategoryHandler(catServ *service.CategoryService, userServ *service.UserService) *CategoryHandler {
 	return &CategoryHandler{
-		serv: *serv,
+		catServ:  catServ,
+		userServ: userServ,
 	}
 }
 
-func (h *Handler) GetCategories(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	w.Header().Set("Content-Type", applicationJson)
+func (h *CategoryHandler) GetCategories(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 
-	categories, err := h.CatHandler.serv.GetCategories(ctx)
+	ctx := context.Background()
+	categories, err := h.catServ.GetCategories(ctx)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if err = json.NewEncoder(w).Encode(categories); err != nil {
@@ -35,18 +37,18 @@ func (h *Handler) GetCategories(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) GetCategory(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set(`Content-Type`, applicationJson)
-	ctx := context.Background()
+func (h *CategoryHandler) GetCategory(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set(`Content-Type`, "application/json")
 
+	ctx := context.Background()
 	vars := mux.Vars(r)["id"]
-	id, err := strconv.Atoi(vars)
+	catId, err := strconv.Atoi(vars)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	category, err := h.CatHandler.serv.GetCategory(ctx, id)
+	category, err := h.catServ.GetCategory(ctx, catId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -58,17 +60,18 @@ func (h *Handler) GetCategory(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set(`Content-Type`, applicationJson)
-	ctx := context.Background()
+func (h *CategoryHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set(`Content-Type`, "application/json")
 
-	id, err := h.UserIdentity(w, r)
-	if id == 0 {
+	ctx := context.Background()
+	header := r.Header.Get("Authorization")
+	userId, err := h.userServ.UserIdentity(ctx, header)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	if _, err = h.UserHandler.serv.IsAdmin(ctx, id); err != nil {
+	if _, err = h.userServ.IsAdmin(ctx, userId); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -79,7 +82,7 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newCategory, err := h.CatHandler.serv.CreateCategory(ctx, category)
+	newCategory, err := h.catServ.CreateCategory(ctx, category)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -91,17 +94,18 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) UpdCategory(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set(`Content-Type`, applicationJson)
-	ctx := context.Background()
+func (h *CategoryHandler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set(`Content-Type`, "application/json")
 
-	userId, err := h.UserIdentity(w, r)
-	if userId == 0 {
+	ctx := context.Background()
+	header := r.Header.Get("Authorization")
+	userId, err := h.userServ.UserIdentity(ctx, header)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	if _, err = h.UserHandler.serv.IsAdmin(ctx, userId); err != nil {
+	if _, err = h.userServ.IsAdmin(ctx, userId); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -116,11 +120,11 @@ func (h *Handler) UpdCategory(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)["id"]
 	updCat.Id, err = strconv.Atoi(vars)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	newCategory, err := h.CatHandler.serv.UpdateCategory(ctx, updCat)
+	newCategory, err := h.catServ.UpdateCategory(ctx, updCat)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -130,5 +134,32 @@ func (h *Handler) UpdCategory(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func (h *CategoryHandler) DeleteCategory(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set(`Content-Type`, "application/json")
+
+	ctx := context.Background()
+	header := r.Header.Get("Authorization")
+
+	userId, err := h.userServ.UserIdentity(ctx, header)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+	}
+
+	if _, err = h.userServ.IsAdmin(ctx, userId); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	vars := mux.Vars(r)["id"]
+	catId, err := strconv.Atoi(vars)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	if err = h.catServ.DeleteCategory(ctx, catId); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.WriteHeader(http.StatusOK)
 
 }

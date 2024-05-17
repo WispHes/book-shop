@@ -1,38 +1,64 @@
 package dep
 
 import (
-	"github.com/wisphes/book-shop/configs"
+	"github.com/jmoiron/sqlx"
 	"github.com/wisphes/book-shop/internal/handler"
-	"github.com/wisphes/book-shop/internal/pkg/pg"
 	"github.com/wisphes/book-shop/internal/repository"
 	"github.com/wisphes/book-shop/internal/service"
-	"log"
 )
 
-func InitDep() *handler.Handler {
-	cfg, err := configs.NewParsedConfig()
-	if err != nil {
-		log.Fatal(err)
+type Dependencies struct {
+	UserRepo   *repository.UserPostgres
+	CatRepo    *repository.CategoryPostgres
+	BookRepo   *repository.BookPostgres
+	BasketRepo *repository.BasketPostgres
+
+	UserService   *service.UserService
+	CatService    *service.CategoryService
+	BookService   *service.BookService
+	BasketService *service.BasketService
+
+	UserHandler   *handler.UserHandler
+	CatHandler    *handler.CategoryHandler
+	BookHandler   *handler.BookHandler
+	BasketHandler *handler.BasketHandler
+
+	_ struct{}
+}
+
+func NewDependencies(db *sqlx.DB) *Dependencies {
+	// repository
+	userRepo := repository.NewUserPostgres(db)
+	catRepo := repository.NewCategoryPostgres(db)
+	bookRepo := repository.NewBookPostgres(db)
+	basketRepo := repository.NewBasketPostgres(db)
+
+	// service
+	userService := service.NewUserService(userRepo)
+	catService := service.NewCategoryService(catRepo)
+	bookService := service.NewBookService(bookRepo)
+	basketService := service.NewBasketService(basketRepo)
+
+	// handler
+	userHandler := handler.NewUserHandler(userService)
+	catHandler := handler.NewCategoryHandler(catService, userService)
+	bookHandler := handler.NewBookHandler(bookService, userService)
+	basketHandler := handler.NewBasketHandler(basketService, userService)
+
+	return &Dependencies{
+		UserRepo:   userRepo,
+		CatRepo:    catRepo,
+		BookRepo:   bookRepo,
+		BasketRepo: basketRepo,
+
+		UserService:   userService,
+		CatService:    catService,
+		BookService:   bookService,
+		BasketService: basketService,
+
+		UserHandler:   userHandler,
+		CatHandler:    catHandler,
+		BookHandler:   bookHandler,
+		BasketHandler: basketHandler,
 	}
-	db, err := pg.NewPostgresDB(pg.Config{
-		Host:     cfg.Database.Host,
-		Port:     cfg.Database.Port,
-		User:     cfg.Database.User,
-		DBName:   cfg.Database.DBName,
-		Password: cfg.Database.Password,
-		SSLMode:  cfg.Database.SSLMode,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	repUser := repository.NewAuthPostgres(db)
-	servUser := service.NewAuthService(repUser)
-	handUser := handler.NewUserHandler(servUser)
-
-	repCat := repository.NewCategoryPostgres(db)
-	servCat := service.NewCategoryService(repCat)
-	handCat := handler.NewCategoryHandler(servCat)
-
-	return handler.NewHandler(*handUser, *handCat)
 }

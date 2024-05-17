@@ -1,8 +1,7 @@
 package models
 
 type Basket struct {
-	Id      int    `json:"id"`
-	UserId  string `json:"user_id"`
-	BookId  string `json:"book_id" binding:"required"`
-	DateAdd string `json:"date_add"`
+	UserId int    `json:"user_id" db:"user_id"`
+	BookId int    `json:"book_id" binding:"required" db:"book_id"`
+	Books  []Book `json:"books"`
 }
