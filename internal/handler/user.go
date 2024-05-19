@@ -5,20 +5,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/wisphes/book-shop/internal/models"
+	"github.com/wisphes/book-shop/internal/service"
 	"net/http"
 )
 
-func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", applicationJson)
-	ctx := context.Background()
-	var input models.User
+type UserHandler struct {
+	serv *service.UserService
+}
 
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+func NewUserHandler(serv *service.UserService) *UserHandler {
+	return &UserHandler{serv: serv}
+}
+
+func (h *UserHandler) SignUp(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	ctx := context.Background()
+	var user models.User
+
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	id, err := h.services.Authorization.CreateUser(ctx, input)
+	id, err := h.serv.CreateUser(ctx, user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -29,21 +38,16 @@ func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type signInInput struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
-
-func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", applicationJson)
+func (h *UserHandler) SignIn(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	ctx := context.Background()
-	var input signInInput
+	var user models.User
 
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	token, err := h.services.Authorization.GenerateToken(ctx, input.Email, input.Password)
+	token, err := h.serv.GenerateToken(ctx, user.Email, user.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

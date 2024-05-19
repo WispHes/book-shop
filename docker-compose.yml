@@ -35,4 +35,4 @@ services:
       - .env
     # переношу из директории файлы в свою локальную, для сохранения данных в бд между перезапусками контейнера
     volumes:
-      - ./pkg/repository/data:/var/lib/postgresql/data
+      - ./internal/pkg/pg/data:/var/lib/postgresql/data

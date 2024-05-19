@@ -26,15 +26,8 @@ create table books
 
 create table basket
 (
-    id          serial PRIMARY KEY NOT NULL unique,
-    userId      INT,
-    book_id     INT,
-    date_add    TIMESTAMP
+    user_id     INT NOT NULL,
+    book_id     INT NOT NULL
 );
-
-INSERT INTO categories (id, title) VALUES
-(1, 'Science Fiction'),
-(2, 'Fantasy'),
-(3, 'Mystery');
 
 

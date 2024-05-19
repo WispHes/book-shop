@@ -7,7 +7,7 @@ FROM golang:1.22.2
 COPY . /go/src/app
 
 # устанавливаю рабочий каталог для последующих инструкций в Dockerfile
-WORKDIR /go/src/app/cmd
+WORKDIR /go/src/app/cmd/app
 
 # собираю приложение из исходного кода main.go в исполняемый файл book-shop
 # -o указывает на то, как исполняемый файл должен быть назван
