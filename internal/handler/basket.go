@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"github.com/wisphes/book-shop/internal/models"
 	"github.com/wisphes/book-shop/internal/service"
 	"net/http"
 	"strconv"
@@ -68,9 +69,8 @@ func (h *BasketHandler) ToPayBasket(w http.ResponseWriter, r *http.Request) {
 func (h *BasketHandler) UpdateBasket(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	method := r.Method
-
 	ctx := context.Background()
+	method := r.Method
 	header := r.Header.Get("Authorization")
 	userId, err := h.userServ.UserIdentity(ctx, header)
 	if err != nil {
@@ -85,8 +85,8 @@ func (h *BasketHandler) UpdateBasket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	basket, err := h.basketServ.UpdateBasket(ctx, userId, bookId, method)
-	if err != nil {
+	var basket models.Basket
+	if basket, err = h.basketServ.UpdateBasket(ctx, userId, bookId, method); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

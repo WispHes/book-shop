@@ -7,7 +7,7 @@ type Book struct {
 	Author          string  `json:"author" binding:"required" db:"author"`
 	Price           float64 `json:"price" binding:"required" db:"price"`
 	QtyStock        int     `json:"qty_stock" binding:"required" db:"qty_stock"`
-	CategoryId      int     `json:"category_id" db:"category_id"`
+	CategoryId      int     `json:"category_id" binding:"required" db:"category_id"`
 }
 
 type Category struct {

@@ -48,8 +48,8 @@ func (h *CategoryHandler) GetCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	category, err := h.catServ.GetCategory(ctx, catId)
-	if err != nil {
+	var category models.Category
+	if category, err = h.catServ.GetCategory(ctx, catId); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -71,7 +71,7 @@ func (h *CategoryHandler) CreateCategory(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if _, err = h.userServ.IsAdmin(ctx, userId); err != nil {
+	if err = h.userServ.IsAdmin(ctx, userId); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -82,13 +82,12 @@ func (h *CategoryHandler) CreateCategory(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	newCategory, err := h.catServ.CreateCategory(ctx, category)
-	if err != nil {
+	if category, err = h.catServ.CreateCategory(ctx, category); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if err = json.NewEncoder(w).Encode(newCategory); err != nil {
+	if err = json.NewEncoder(w).Encode(category); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -105,32 +104,29 @@ func (h *CategoryHandler) UpdateCategory(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if _, err = h.userServ.IsAdmin(ctx, userId); err != nil {
+	if err = h.userServ.IsAdmin(ctx, userId); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	var updCat models.Category
-
-	if err = json.NewDecoder(r.Body).Decode(&updCat); err != nil {
+	var category models.Category
+	if err = json.NewDecoder(r.Body).Decode(&category); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	vars := mux.Vars(r)["id"]
-	updCat.Id, err = strconv.Atoi(vars)
-	if err != nil {
+	if category.Id, err = strconv.Atoi(vars); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	newCategory, err := h.catServ.UpdateCategory(ctx, updCat)
-	if err != nil {
+	if category, err = h.catServ.UpdateCategory(ctx, category); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if err = json.NewEncoder(w).Encode(newCategory); err != nil {
+	if err = json.NewEncoder(w).Encode(category); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -145,21 +141,24 @@ func (h *CategoryHandler) DeleteCategory(w http.ResponseWriter, r *http.Request)
 	userId, err := h.userServ.UserIdentity(ctx, header)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
 	}
 
-	if _, err = h.userServ.IsAdmin(ctx, userId); err != nil {
+	if err = h.userServ.IsAdmin(ctx, userId); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	vars := mux.Vars(r)["id"]
 	catId, err := strconv.Atoi(vars)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 	if err = h.catServ.DeleteCategory(ctx, catId); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-
 }

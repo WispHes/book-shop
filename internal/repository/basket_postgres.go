@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/wisphes/book-shop/internal/models"
@@ -43,7 +42,7 @@ func (p *BasketPostgres) GetBasket(ctx context.Context, userId int) (models.Bask
 		if err = p.db.Get(&book, query, bookId); err != nil {
 			return models.Basket{}, err
 		}
-		if book.QtyStock != 0 {
+		if book.QtyStock != 0 && book.CategoryId != 0 {
 			basket.Books = append(basket.Books, book)
 		}
 	}
@@ -52,14 +51,18 @@ func (p *BasketPostgres) GetBasket(ctx context.Context, userId int) (models.Bask
 }
 
 func (p *BasketPostgres) ToPayBasket(ctx context.Context, userId int) error {
-	query := fmt.Sprintf("SELECT book_id FROM %s WHERE user_id=$1", pg.BasketTable)
+	query := fmt.Sprintf(
+		"SELECT book_id FROM %s WHERE user_id=$1", pg.BasketTable,
+	)
 
 	rows, err := p.db.Query(query, userId)
 	if err != nil {
 		return err
 	}
 
-	query = fmt.Sprintf("DELETE FROM %s WHERE user_id=$1", pg.BasketTable)
+	query = fmt.Sprintf(
+		"DELETE FROM %s WHERE user_id=$1", pg.BasketTable,
+	)
 	if _, err = p.db.Exec(query, userId); err != nil {
 		return err
 	}
@@ -71,7 +74,9 @@ func (p *BasketPostgres) ToPayBasket(ctx context.Context, userId int) error {
 			return err
 		}
 
-		query = fmt.Sprintf("UPDATE %s SET qty_stock=qty_stock-1 WHERE id=$1", pg.BooksTable)
+		query = fmt.Sprintf(
+			"UPDATE %s SET qty_stock=qty_stock-1 WHERE id=$1", pg.BooksTable,
+		)
 		if _, err = p.db.Exec(query, bookId); err != nil {
 			return err
 		}
@@ -82,21 +87,26 @@ func (p *BasketPostgres) ToPayBasket(ctx context.Context, userId int) error {
 
 func (p *BasketPostgres) UpdateBasket(ctx context.Context, userId, bookId int, method string) (models.Basket, error) {
 	if method == "DELETE" {
-		query := fmt.Sprintf("DELETE FROM %s WHERE user_id=$1 AND book_id=$2", pg.BasketTable)
+		query := fmt.Sprintf(
+			"DELETE FROM %s WHERE user_id=$1 AND book_id=$2", pg.BasketTable,
+		)
 
 		if _, err := p.db.Exec(query, userId, bookId); err != nil {
 			return models.Basket{}, err
 		}
 
-	} else if method == "POST" {
+	} else if method == "PUT" {
 		var basket models.Basket
 
-		query := fmt.Sprintf("SELECT * FROM %s WHERE user_id=$1 AND book_id=$2", pg.BasketTable)
-		if ok := p.db.Get(&basket, query, userId, bookId); ok == nil {
-			return models.Basket{}, errors.New("book is already in basket")
+		query := fmt.Sprintf(
+			"SELECT * FROM %s WHERE user_id=$1 AND book_id=$2", pg.BasketTable,
+		)
+		if err := p.db.Get(&basket, query, userId, bookId); err == nil {
+			return models.Basket{}, err
 		}
-
-		query = fmt.Sprintf("INSERT INTO %s (user_id, book_id) VALUES ($1, $2)", pg.BasketTable)
+		query = fmt.Sprintf(
+			"INSERT INTO %s (user_id, book_id) VALUES ($1, $2)", pg.BasketTable,
+		)
 		if _, err := p.db.Exec(query, userId, bookId); err != nil {
 			return models.Basket{}, err
 		}

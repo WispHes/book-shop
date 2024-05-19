@@ -18,7 +18,7 @@ type User interface {
 	CreateUser(ctx context.Context, user models.User) (int, error)
 	GenerateToken(ctx context.Context, email, password string) (string, error)
 	ParseToken(ctx context.Context, token string) (int, error)
-	IsAdmin(ctx context.Context, userId int) (bool, error)
+	IsAdmin(ctx context.Context, userId int) error
 	UserIdentity(ctx context.Context, header string) (int, error)
 }
 
@@ -78,15 +78,15 @@ func (s *UserService) ParseToken(ctx context.Context, accessToken string) (int, 
 	return claims.UserId, nil
 }
 
-func (s *UserService) IsAdmin(ctx context.Context, userId int) (bool, error) {
+func (s *UserService) IsAdmin(ctx context.Context, userId int) error {
 	user, err := s.repo.IsAdmin(ctx, userId)
 	if err != nil {
-		return false, err
+		return err
 	}
 	if !user.IsAdmin {
-		return false, errors.New("user is not admin")
+		return errors.New("user is not admin")
 	}
-	return true, nil
+	return nil
 }
 
 func (s *UserService) UserIdentity(ctx context.Context, header string) (int, error) {

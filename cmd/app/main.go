@@ -37,13 +37,14 @@ func buildRoutes(r *mux.Router, dep *dep.Dependencies) *mux.Router {
 
 	// Book
 	r.HandleFunc(`/api/books`, dep.BookHandler.GetBooks).Methods(http.MethodGet)
-	r.HandleFunc(`/api/book/{id}`, dep.BookHandler.GetBook).Methods(http.MethodGet)
 	r.HandleFunc(`/api/book`, dep.BookHandler.CreateBook).Methods(http.MethodPost)
-	r.HandleFunc(`/api/book`, dep.BookHandler.UpdateBook).Methods(http.MethodPut)
+	r.HandleFunc(`/api/book/{id}`, dep.BookHandler.GetBook).Methods(http.MethodGet)
+	r.HandleFunc(`/api/book/{id}`, dep.BookHandler.UpdateBook).Methods(http.MethodPut)
+	r.HandleFunc(`/api/book/{id}`, dep.BookHandler.DeleteBook).Methods(http.MethodDelete)
 
 	// Basket
 	r.HandleFunc(`/api/basket`, dep.BasketHandler.GetBasket).Methods(http.MethodGet)
-	r.HandleFunc(`/api/basket/{id}`, dep.BasketHandler.UpdateBasket).Methods(http.MethodPost, http.MethodDelete)
+	r.HandleFunc(`/api/basket/{id}`, dep.BasketHandler.UpdateBasket).Methods(http.MethodDelete, http.MethodPut)
 	r.HandleFunc(`/api/basket/pay`, dep.BasketHandler.ToPayBasket).Methods(http.MethodPost)
 
 	return r
