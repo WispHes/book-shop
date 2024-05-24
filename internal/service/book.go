@@ -3,22 +3,13 @@ package service
 import (
 	"context"
 	"github.com/wisphes/book-shop/internal/models"
-	"github.com/wisphes/book-shop/internal/repository"
 )
 
-type Book interface {
-	GetBooks(ctx context.Context) ([]models.Book, error)
-	GetBook(ctx context.Context, bookId int) (models.Book, error)
-	CreateBook(ctx context.Context, book models.Book) (models.Book, error)
-	UpdateBook(ctx context.Context, book models.Book) (models.Book, error)
-	DeleteBook(ctx context.Context, bookId int) error
-}
-
 type BookService struct {
-	repo *repository.BookPostgres
+	repo BookRepository
 }
 
-func NewBookService(repo *repository.BookPostgres) *BookService {
+func NewBookService(repo BookRepository) *BookService {
 	return &BookService{repo: repo}
 }
 

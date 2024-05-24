@@ -5,17 +5,16 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/wisphes/book-shop/internal/models"
-	"github.com/wisphes/book-shop/internal/service"
 	"net/http"
 	"strconv"
 )
 
 type BookHandler struct {
-	bookServ *service.BookService
-	userServ *service.UserService
+	bookServ BookService
+	userServ UserService
 }
 
-func NewBookHandler(bookServ *service.BookService, userServ *service.UserService) *BookHandler {
+func NewBookHandler(bookServ BookService, userServ UserService) *BookHandler {
 	return &BookHandler{
 		bookServ: bookServ,
 		userServ: userServ,

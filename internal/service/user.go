@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/wisphes/book-shop/internal/models"
-	"github.com/wisphes/book-shop/internal/repository"
 	"strings"
 	"time"
 )
@@ -14,19 +13,11 @@ const (
 	signingKey = "ASDFghj1234%^&*ZXCVbnm"
 )
 
-type User interface {
-	CreateUser(ctx context.Context, user models.User) (int, error)
-	GenerateToken(ctx context.Context, email, password string) (string, error)
-	ParseToken(ctx context.Context, token string) (int, error)
-	IsAdmin(ctx context.Context, userId int) error
-	UserIdentity(ctx context.Context, header string) (int, error)
-}
-
 type UserService struct {
-	repo *repository.UserPostgres
+	repo UserRepository
 }
 
-func NewUserService(repo *repository.UserPostgres) *UserService {
+func NewUserService(repo UserRepository) *UserService {
 	return &UserService{repo: repo}
 }
 

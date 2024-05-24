@@ -2,23 +2,18 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	"github.com/wisphes/book-shop/internal/models"
 	"github.com/wisphes/book-shop/internal/pkg/pg"
 )
 
-type Basket interface {
-	GetBasket(ctx context.Context, userId int) (models.Basket, error)
-	ToPayBasket(ctx context.Context, userId int) error
-	UpdateBasket(ctx context.Context, userId, bookId int, method string) (models.Basket, error)
-}
-
 type BasketPostgres struct {
-	db *sqlx.DB
+	db *sql.DB
 }
 
-func NewBasketPostgres(db *sqlx.DB) *BasketPostgres {
+func NewBasketPostgres(db *sql.DB) *BasketPostgres {
 	return &BasketPostgres{db: db}
 }
 
@@ -32,16 +27,35 @@ func (p *BasketPostgres) GetBasket(ctx context.Context, userId int) (models.Bask
 	}
 
 	for rows.Next() {
-		var book models.Book
 		var bookId int
+		var book models.Book
 
 		if err = rows.Scan(&bookId); err != nil {
-			return models.Basket{}, err
+			return basket, err
 		}
+
 		query = fmt.Sprintf("SELECT * FROM %s WHERE id=$1", pg.BooksTable)
-		if err = p.db.Get(&book, query, bookId); err != nil {
-			return models.Basket{}, err
+
+		row, err1 := p.db.Query(query, bookId)
+		if err1 != nil {
+			return basket, err1
 		}
+
+		for row.Next() {
+			if err = row.Scan(
+				&book.Id,
+				&book.Title,
+				&book.YearPublication,
+				&book.Author,
+				&book.Price,
+				&book.QtyStock,
+				&book.CategoryId,
+			); err != nil {
+				return basket, err
+			}
+
+		}
+
 		if book.QtyStock != 0 && book.CategoryId != 0 {
 			basket.Books = append(basket.Books, book)
 		}
@@ -101,14 +115,22 @@ func (p *BasketPostgres) UpdateBasket(ctx context.Context, userId, bookId int, m
 		query := fmt.Sprintf(
 			"SELECT * FROM %s WHERE user_id=$1 AND book_id=$2", pg.BasketTable,
 		)
-		if err := p.db.Get(&basket, query, userId, bookId); err == nil {
-			return models.Basket{}, err
+
+		rows, err := p.db.Query(query, userId, bookId)
+		if err != nil {
+			return basket, err
 		}
+		for rows.Next() {
+			if err = rows.Scan(&basket.UserId, &basket.BookId); err != nil {
+				return basket, err
+			}
+		}
+
 		query = fmt.Sprintf(
 			"INSERT INTO %s (user_id, book_id) VALUES ($1, $2)", pg.BasketTable,
 		)
 		if _, err := p.db.Exec(query, userId, bookId); err != nil {
-			return models.Basket{}, err
+			return basket, errors.New("book already in basket")
 		}
 
 	}

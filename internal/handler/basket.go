@@ -5,17 +5,16 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/wisphes/book-shop/internal/models"
-	"github.com/wisphes/book-shop/internal/service"
 	"net/http"
 	"strconv"
 )
 
 type BasketHandler struct {
-	basketServ *service.BasketService
-	userServ   *service.UserService
+	basketServ BasketService
+	userServ   UserService
 }
 
-func NewBasketHandler(basketServ *service.BasketService, userServ *service.UserService) *BasketHandler {
+func NewBasketHandler(basketServ BasketService, userServ UserService) *BasketHandler {
 	return &BasketHandler{
 		basketServ: basketServ,
 		userServ:   userServ,

@@ -1,7 +1,7 @@
 package dep
 
 import (
-	"github.com/jmoiron/sqlx"
+	"database/sql"
 	"github.com/wisphes/book-shop/internal/handler"
 	"github.com/wisphes/book-shop/internal/repository"
 	"github.com/wisphes/book-shop/internal/service"
@@ -26,7 +26,7 @@ type Dependencies struct {
 	_ struct{}
 }
 
-func NewDependencies(db *sqlx.DB) *Dependencies {
+func NewDependencies(db *sql.DB) *Dependencies {
 	// repository
 	userRepo := repository.NewUserPostgres(db)
 	catRepo := repository.NewCategoryPostgres(db)

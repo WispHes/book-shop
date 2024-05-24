@@ -3,19 +3,19 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/wisphes/book-shop/internal/models"
-	"github.com/wisphes/book-shop/internal/service"
 	"net/http"
 	"strconv"
 )
 
 type CategoryHandler struct {
-	catServ  *service.CategoryService
-	userServ *service.UserService
+	catServ  CategoryService
+	userServ UserService
 }
 
-func NewCategoryHandler(catServ *service.CategoryService, userServ *service.UserService) *CategoryHandler {
+func NewCategoryHandler(catServ CategoryService, userServ UserService) *CategoryHandler {
 	return &CategoryHandler{
 		catServ:  catServ,
 		userServ: userServ,
@@ -86,6 +86,7 @@ func (h *CategoryHandler) CreateCategory(w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	fmt.Println(err)
 
 	if err = json.NewEncoder(w).Encode(category); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

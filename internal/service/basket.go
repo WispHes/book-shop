@@ -3,20 +3,13 @@ package service
 import (
 	"context"
 	"github.com/wisphes/book-shop/internal/models"
-	"github.com/wisphes/book-shop/internal/repository"
 )
 
-type Basket interface {
-	GetBasket(ctx context.Context, userId int) (models.Basket, error)
-	ToPayBasket(ctx context.Context, userId int) error
-	UpdateBasket(ctx context.Context, userId, bookId int, method string) (models.Basket, error)
-}
-
 type BasketService struct {
-	repo *repository.BasketPostgres
+	repo BasketRepository
 }
 
-func NewBasketService(repo *repository.BasketPostgres) *BasketService {
+func NewBasketService(repo BasketRepository) *BasketService {
 	return &BasketService{repo: repo}
 }
 

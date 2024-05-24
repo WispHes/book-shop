@@ -7,15 +7,13 @@ FROM golang:1.22.2
 COPY . /go/src/app
 
 # устанавливаю рабочий каталог для последующих инструкций в Dockerfile
-WORKDIR /go/src/app/cmd/app
+WORKDIR /go/src/app/
 
 # собираю приложение из исходного кода main.go в исполняемый файл book-shop
 # -o указывает на то, как исполняемый файл должен быть назван
-RUN go build -o book-shop main.go
+RUN go build -o book-shop cmd/app/main.go
 
 # изменяет права доступа к файлу wait-for-it.sh делая его исполняемым
-RUN chmod +x wait-for-it.sh
+RUN chmod +x cmd/app/wait-for-it.sh
 
-# указывает Docker на то, что при запуске контейнера нужно запустить исполняемый файл
-# CMD ["./book-shop"] - прописал в docker-compose
 

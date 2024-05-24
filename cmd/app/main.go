@@ -1,6 +1,11 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"github.com/wisphes/book-shop/cmd/dep"
@@ -10,17 +15,49 @@ import (
 	"net/http"
 )
 
-type Server struct {
-	httpServer *http.Server
-}
+func main() {
+	cfg, err := configs.NewParsedConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+	db, err := pg.NewPostgresDB(pg.Config{
+		Host:     cfg.Database.Host,
+		Port:     cfg.Database.Port,
+		User:     cfg.Database.User,
+		DBName:   cfg.Database.DBName,
+		Password: cfg.Database.Password,
+		SSLMode:  cfg.Database.SSLMode,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err = migrationsUp(db); err != nil {
+		log.Fatal(err)
+	}
 
-func (s *Server) Run(port string, routes *mux.Router) error {
+	dependencies := dep.NewDependencies(db)
+	routes := buildRoutes(mux.NewRouter(), dependencies)
 
-	s.httpServer = &http.Server{
-		Addr:    ":" + port,
+	server := &http.Server{
+		Addr:    ":" + cfg.ServerPort,
 		Handler: routes,
 	}
-	return s.httpServer.ListenAndServe()
+
+	log.Fatal(server.ListenAndServe())
+}
+
+func migrationsUp(db *sql.DB) error {
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err != nil {
+		log.Fatalf("Could not create migration driver: %v", err)
+	}
+	m, err := migrate.NewWithDatabaseInstance(
+		"file:./internal/pkg/pg/migrations",
+		"postgres", driver)
+	if err = m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		log.Fatalf("Could not apply migrations: %v", err)
+	}
+	return nil
 }
 
 func buildRoutes(r *mux.Router, dep *dep.Dependencies) *mux.Router {
@@ -48,28 +85,4 @@ func buildRoutes(r *mux.Router, dep *dep.Dependencies) *mux.Router {
 	r.HandleFunc(`/api/basket/pay`, dep.BasketHandler.ToPayBasket).Methods(http.MethodPost)
 
 	return r
-}
-
-func main() {
-	cfg, err := configs.NewParsedConfig()
-	if err != nil {
-		log.Fatal(err)
-	}
-	db, err := pg.NewPostgresDB(pg.Config{
-		Host:     cfg.Database.Host,
-		Port:     cfg.Database.Port,
-		User:     cfg.Database.User,
-		DBName:   cfg.Database.DBName,
-		Password: cfg.Database.Password,
-		SSLMode:  cfg.Database.SSLMode,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	dependencies := dep.NewDependencies(db)
-	r := buildRoutes(mux.NewRouter(), dependencies)
-	srv := &Server{}
-
-	log.Fatal(srv.Run(cfg.ServerPort, r))
 }

@@ -2,26 +2,18 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	"github.com/wisphes/book-shop/internal/models"
 	"github.com/wisphes/book-shop/internal/pkg/pg"
 )
 
-type Category interface {
-	GetCategories(ctx context.Context) ([]models.Category, error)
-	GetCategory(ctx context.Context, catId int) (models.Category, error)
-	CreateCategory(ctx context.Context, category models.Category) (models.Category, error)
-	UpdateCategory(ctx context.Context, category models.Category) (models.Category, error)
-	DeleteCategory(ctx context.Context, catId int) error
-}
-
 type CategoryPostgres struct {
-	db *sqlx.DB
+	db *sql.DB
 }
 
-func NewCategoryPostgres(db *sqlx.DB) *CategoryPostgres {
+func NewCategoryPostgres(db *sql.DB) *CategoryPostgres {
 	return &CategoryPostgres{db: db}
 }
 
@@ -50,40 +42,30 @@ func (r *CategoryPostgres) GetCategory(ctx context.Context, catId int) (models.C
 	var category models.Category
 
 	query := fmt.Sprintf("SELECT * FROM %s WHERE id=$1", pg.CategoriesTable)
-	err := r.db.Get(&category, query, catId)
 
-	return category, err
+	rows := r.db.QueryRow(query, catId)
+	if err := rows.Scan(&category.Id, &category.Title); err != nil {
+		return category, errors.New("category is not in table")
+	}
+
+	return category, nil
 }
 
 func (r *CategoryPostgres) CreateCategory(ctx context.Context, category models.Category) (models.Category, error) {
-	// сначала проверяю, есть ли в базе уже эта категория
-	if _, ok := r.checkCatInTable(ctx, category.Title); ok == nil {
+	query := fmt.Sprintf("INSERT INTO %s (title) VALUES ($1)", pg.CategoriesTable)
+	if _, err := r.db.Exec(query, category.Title); err != nil {
 		return models.Category{}, errors.New("category already exists")
 	}
 
-	// если нет, то заполняю таблицу новой категорией
-	query := fmt.Sprintf("INSERT INTO %s (title) VALUES ($1)", pg.CategoriesTable)
-	if _, err := r.db.Exec(query, category.Title); err != nil {
-		return models.Category{}, err
-	}
-
-	// после заполнения отдаю эту категорию для вывода
 	return r.checkCatInTable(ctx, category.Title)
 }
 
 func (r *CategoryPostgres) UpdateCategory(ctx context.Context, category models.Category) (models.Category, error) {
-	// сначала проверяю, есть ли в базе уже эта категория на которую я хочу изменить текущую
-	if _, ok := r.checkCatInTable(ctx, category.Title); ok == nil {
-		return category, errors.New("category already exists")
-	}
-
-	// если нет, то обновляю в таблице категорию
 	query := fmt.Sprintf("UPDATE %s SET title=$1 WHERE id=$2", pg.CategoriesTable)
 	if _, err := r.db.Exec(query, category.Title, category.Id); err != nil {
 		return models.Category{}, err
 	}
 
-	// после обновления отдаю эту категорию для вывода
 	return r.checkCatInTable(ctx, category.Title)
 }
 
@@ -91,9 +73,13 @@ func (r *CategoryPostgres) checkCatInTable(ctx context.Context, title string) (m
 	var category models.Category
 
 	query := fmt.Sprintf("SELECT * FROM %s WHERE title=$1", pg.CategoriesTable)
-	ok := r.db.Get(&category, query, title)
 
-	return category, ok
+	rows := r.db.QueryRow(query, title)
+	if err := rows.Scan(&category.Id, &category.Title); err != nil {
+		return category, err
+	}
+
+	return category, nil
 }
 
 func (r *CategoryPostgres) DeleteCategory(ctx context.Context, catId int) error {

@@ -5,15 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/wisphes/book-shop/internal/models"
-	"github.com/wisphes/book-shop/internal/service"
 	"net/http"
 )
 
 type UserHandler struct {
-	serv *service.UserService
+	serv UserService
 }
 
-func NewUserHandler(serv *service.UserService) *UserHandler {
+func NewUserHandler(serv UserService) *UserHandler {
 	return &UserHandler{serv: serv}
 }
 

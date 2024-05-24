@@ -19,7 +19,7 @@ services:
     env_file:
       - .env
     # команды, которые будут выполняться при запуске контейнера
-    command: ["./wait-for-it.sh", "db:5432", "--timeout=60", "--", "./book-shop"]
+    command: ["./cmd/app/wait-for-it.sh", "db:5432", "--timeout=60", "--", "./book-shop"]
 
   # определение сервиса бд
   db:
